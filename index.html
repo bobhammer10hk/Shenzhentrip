@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emily & Faye's Shenzhen Day Trip</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDF2F8; /* Light Pink bg */
+        }
+        .font-bubble {
+            font-family: 'Fredoka', sans-serif;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .card-shadow {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- Data & Constants ---
+
+        const LOCATIONS = {
+            upper_hills: {
+                name: "Meland Club (Upper Hills)",
+                chnName: "深圳深业上城 Meland Club",
+                address: "Futian District, Huanggang Rd, Upper Hills Mall, L3",
+                chnAddress: "深圳市福田区皇岗路5001号深业上城L3层",
+                metro: "Line 10 - Donggualing Stn (Exit E)",
+                taxiTime: "20-25 min",
+                taxiCost: "¥30-40",
+                metroTime: "35 min",
+                metroCost: "¥4",
+                features: "Premium, huge, very photogenic, more expensive.",
+                dining: [
+                    { name: "Chef Tan's Kitchen (Pigeon)", desc: "Famous roasted pigeon, kid-friendly.", price: "$$" },
+                    { name: "Wagas", desc: "Healthy pasta & salads, quick service.", price: "$$" },
+                    { name: "Mandarin Oriental Buffet", desc: "High-end, wide variety.", price: "$$$" }
+                ]
+            },
+            central_walk: {
+                name: "Meland (Central Walk)",
+                chnName: "深圳领展中心城 Meland",
+                address: "Futian District, Fuhua 1st Rd, Central Walk Mall, L1",
+                chnAddress: "深圳市福田区福华一路3号领展中心城L1层",
+                metro: "Line 1 or 4 - Convention & Exhibition Center (Exit B)",
+                taxiTime: "10-15 min",
+                taxiCost: "¥20-25",
+                metroTime: "15 min",
+                metroCost: "¥2",
+                features: "Smaller, very convenient, right next to border.",
+                dining: [
+                    { name: "Tairyo Teppanyaki", desc: "Interactive cooking, kids love it.", price: "$$" },
+                    { name: "Lian City (Link City)", desc: "Underground food street with tons of options.", price: "$" },
+                    { name: "Pizza Marzano", desc: "Reliable pizza and pasta.", price: "$$" }
+                ]
+            }
+        };
+
+        const CHECKLIST = [
+            { id: 1, text: "Passports / Home Return Permits", sub: "Check validity!", checked: false },
+            { id: 2, text: "Alipay / WeChat Pay", sub: "Verify identity & balance beforehand", checked: false },
+            { id: 3, text: "Kid's Grip Socks", sub: "Required for Meland (can buy there but $$)", checked: false },
+            { id: 4, text: "Power Bank", sub: "Phone battery drains fast with maps", checked: false },
+            { id: 5, text: "Data Roaming", sub: "Activate before crossing border", checked: false },
+            { id: 6, text: "Tissue / Wipes", sub: "Always handy in SZ", checked: false },
+        ];
+
+        // --- Components ---
+
+        const Header = ({ activeTab, setActiveTab }) => (
+            <div className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-pink-100 pb-2">
+                <div className="pt-6 pb-4 px-6">
+                    <h1 className="text-2xl font-bubble text-pink-600 font-bold">
+                        Emily & Faye's Trip <i className="fas fa-heart text-pink-400 ml-1"></i>
+                    </h1>
+                    <p className="text-sm text-gray-500">Destination: Shenzhen • 9:30 AM - 5:30 PM</p>
+                </div>
+                <div className="flex justify-around px-2">
+                    {['Itinerary', 'Transport', 'Taxi Cards', 'Info'].map((tab) => (
+                        <button
+                            key={tab}
+                            onClick={() => setActiveTab(tab)}
+                            className={`px-3 py-2 text-sm font-medium rounded-full transition-all duration-200 ${
+                                activeTab === tab
+                                    ? 'bg-pink-500 text-white shadow-md transform scale-105'
+                                    : 'text-gray-500 hover:bg-pink-50'
+                            }`}
+                        >
+                            {tab}
+                        </button>
+                    ))}
+                </div>
+            </div>
+        );
+
+        const TimelineItem = ({ time, title, desc, icon, isLast }) => (
+            <div className="flex gap-4">
+                <div className="flex flex-col items-center">
+                    <div className="w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center text-pink-500 shadow-sm z-10 border-2 border-white">
+                        <i className={`fas ${icon}`}></i>
+                    </div>
+                    {!isLast && <div className="w-0.5 h-full bg-pink-100 my-1"></div>}
+                </div>
+                <div className="pb-8 flex-1">
+                    <div className="bg-white p-4 rounded-xl card-shadow border border-pink-50">
+                        <span className="text-xs font-bold text-pink-400 uppercase tracking-wide">{time}</span>
+                        <h3 className="text-lg font-bold text-gray-800 mt-1">{title}</h3>
+                        <p className="text-sm text-gray-600 mt-1 leading-relaxed">{desc}</p>
+                    </div>
+                </div>
+            </div>
+        );
+
+        const ItineraryView = ({ location, setLocation }) => {
+            const locData = LOCATIONS[location];
+
+            return (
+                <div className="p-6 space-y-6 pb-24">
+                    {/* Location Toggle */}
+                    <div className="bg-white p-2 rounded-xl shadow-sm border border-gray-100 flex">
+                        <button
+                            onClick={() => setLocation('upper_hills')}
+                            className={`flex-1 py-3 text-sm font-bold rounded-lg transition-all ${
+                                location === 'upper_hills' ? 'bg-purple-500 text-white shadow-md' : 'text-gray-500'
+                            }`}
+                        >
+                            Upper Hills (Best)
+                        </button>
+                        <button
+                            onClick={() => setLocation('central_walk')}
+                            className={`flex-1 py-3 text-sm font-bold rounded-lg transition-all ${
+                                location === 'central_walk' ? 'bg-blue-400 text-white shadow-md' : 'text-gray-500'
+                            }`}
+                        >
+                            Central Walk (Close)
+                        </button>
+                    </div>
+
+                    <div className="mt-4">
+                        <TimelineItem
+                            time="09:30 AM"
+                            title="Depart Hong Kong"
+                            desc="Head to Futian Checkpoint (Lok Ma Chau). Remember to fill out the health declaration if still required (rarely)."
+                            icon="fa-train"
+                        />
+                        <TimelineItem
+                            time="10:45 AM"
+                            title="Arrive at Meland"
+                            desc={`Arrive at ${locData.name}. Drop bags in lockers. Let Faye run wild!`}
+                            icon="fa-child-reaching"
+                        />
+                        <TimelineItem
+                            time="01:00 PM"
+                            title="Lunch Break"
+                            desc={`Eat nearby. Recommended: ${locData.dining[0].name} or ${locData.dining[1].name}.`}
+                            icon="fa-utensils"
+                        />
+                         <TimelineItem
+                            time="02:30 PM"
+                            title="Round 2 or Shopping"
+                            desc="Back to Meland for more play, or browse the mall shops while Faye naps/rests."
+                            icon="fa-bag-shopping"
+                        />
+                        <TimelineItem
+                            time={location === 'upper_hills' ? "04:00 PM" : "04:30 PM"}
+                            title="Head to Border"
+                            desc={`Leave ${location === 'upper_hills' ? 'earlier (taxi traffic)' : 'now'}. Aim to cross border before rush hour peak.`}
+                            icon="fa-taxi"
+                        />
+                        <TimelineItem
+                            time="05:30 PM"
+                            title="Back in HK"
+                            desc="Mission accomplished! Home for dinner."
+                            icon="fa-house-chimney"
+                            isLast={true}
+                        />
+                    </div>
+                </div>
+            );
+        };
+
+        const TransportView = ({ location }) => {
+            const loc = LOCATIONS[location];
+
+            return (
+                <div className="p-6 space-y-6">
+                    <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100">
+                        <h2 className="text-xl font-bold text-blue-800 mb-4 flex items-center">
+                            <i className="fas fa-location-dot mr-2"></i> To: {loc.name}
+                        </h2>
+                        <div className="grid grid-cols-2 gap-4">
+                            {/* Didi Card */}
+                            <div className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-green-500">
+                                <div className="text-center mb-2">
+                                    <i className="fas fa-car text-3xl text-green-500"></i>
+                                </div>
+                                <h3 className="font-bold text-center text-gray-800">Didi / Taxi</h3>
+                                <div className="mt-3 space-y-2 text-sm">
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-500">Time:</span>
+                                        <span className="font-medium">{loc.taxiTime}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-500">Cost:</span>
+                                        <span className="font-medium">{loc.taxiCost}</span>
+                                    </div>
+                                    <div className="text-xs text-gray-400 mt-2 text-center">
+                                        *From Futian Port
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Metro Card */}
+                            <div className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-red-500">
+                                <div className="text-center mb-2">
+                                    <i className="fas fa-train-subway text-3xl text-red-500"></i>
+                                </div>
+                                <h3 className="font-bold text-center text-gray-800">Metro</h3>
+                                <div className="mt-3 space-y-2 text-sm">
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-500">Time:</span>
+                                        <span className="font-medium">{loc.metroTime}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-500">Cost:</span>
+                                        <span className="font-medium">{loc.metroCost}</span>
+                                    </div>
+                                    <div className="text-xs text-gray-400 mt-2 text-center">
+                                        {loc.metro}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                     <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-100 text-sm text-yellow-800">
+                        <i className="fas fa-lightbulb mr-2"></i>
+                        <strong>Tip:</strong> If you take a taxi, show the "Taxi Card" in the app. Didi English app works well, but drivers usually call—just say "Wo zai (I am at) Starbucks/Gate 1".
+                    </div>
+                </div>
+            );
+        };
+
+        const TaxiCard = ({ title, chnName, address, chnAddress }) => (
+            <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-100 mb-6 relative overflow-hidden">
+                <div className="absolute top-0 right-0 bg-pink-500 text-white text-xs px-3 py-1 rounded-bl-lg">
+                    Show Driver
+                </div>
+                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-1">{title}</h3>
+                <h2 className="text-3xl font-bold text-gray-900 mb-2 font-bubble">{chnName}</h2>
+                <p className="text-lg text-gray-600 mb-4">{chnAddress}</p>
+                <div className="h-px bg-gray-200 w-full mb-3"></div>
+                <p className="text-sm text-gray-400">{address}</p>
+            </div>
+        );
+
+        const TranslateView = ({ location }) => {
+            const loc = LOCATIONS[location];
+            return (
+                <div className="p-6 pb-24">
+                    <TaxiCard
+                        title="I want to go to Meland"
+                        chnName={loc.chnName}
+                        chnAddress={loc.chnAddress}
+                        address={loc.address}
+                    />
+                    <TaxiCard
+                        title="I want to go to Border"
+                        chnName="福田口岸"
+                        chnAddress="深圳市福田区"
+                        address="Futian Checkpoint (Port)"
+                    />
+                     <div className="mt-4 grid grid-cols-2 gap-4">
+                        <button className="bg-gray-100 p-4 rounded-xl text-center hover:bg-gray-200">
+                            <div className="text-xl mb-1">🚗</div>
+                            <div className="text-sm font-bold text-gray-600">Stop Here</div>
+                            <div className="text-xs text-gray-400">在这里停</div>
+                        </button>
+                         <button className="bg-gray-100 p-4 rounded-xl text-center hover:bg-gray-200">
+                            <div className="text-xl mb-1">❄️</div>
+                            <div className="text-sm font-bold text-gray-600">Too Cold</div>
+                            <div className="text-xs text-gray-400">太冷了</div>
+                        </button>
+                     </div>
+                </div>
+            );
+        };
+
+        const InfoView = ({ location }) => {
+             const [items, setItems] = useState(CHECKLIST);
+             const locData = LOCATIONS[location];
+
+             const toggleItem = (id) => {
+                 setItems(items.map(item =>
+                     item.id === id ? { ...item, checked: !item.checked } : item
+                 ));
+             };
+
+             return (
+                 <div className="p-6 pb-24 space-y-6">
+                    {/* Checklist */}
+                    <div className="bg-white rounded-2xl shadow-sm p-5 border border-pink-50">
+                        <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                            <i className="fas fa-clipboard-check text-pink-500 mr-2"></i> Bag Check
+                        </h3>
+                        <div className="space-y-3">
+                            {items.map(item => (
+                                <div key={item.id} onClick={() => toggleItem(item.id)} className="flex items-start cursor-pointer">
+                                    <div className={`w-5 h-5 rounded border mt-0.5 flex items-center justify-center transition-colors ${item.checked ? 'bg-pink-500 border-pink-500' : 'border-gray-300'}`}>
+                                        {item.checked && <i className="fas fa-check text-white text-xs"></i>}
+                                    </div>
+                                    <div className="ml-3">
+                                        <p className={`text-sm font-medium ${item.checked ? 'text-gray-400 line-through' : 'text-gray-700'}`}>{item.text}</p>
+                                        <p className="text-xs text-gray-400">{item.sub}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Food Info */}
+                    <div className="bg-white rounded-2xl shadow-sm p-5 border border-orange-50">
+                         <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                            <i className="fas fa-burger text-orange-500 mr-2"></i> Food Near {location === 'upper_hills' ? 'Upper Hills' : 'Central Walk'}
+                        </h3>
+                        <div className="space-y-3">
+                            {locData.dining.map((place, idx) => (
+                                <div key={idx} className="pb-3 border-b border-gray-100 last:border-0 last:pb-0">
+                                    <div className="flex justify-between items-center">
+                                        <h4 className="font-bold text-gray-800">{place.name}</h4>
+                                        <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded">{place.price}</span>
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-1">{place.desc}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Emergency */}
+                    <div className="bg-red-50 rounded-xl p-4 text-xs text-red-800 leading-relaxed">
+                        <strong>Emergency:</strong> Police 110, Ambulance 120.<br/>
+                        HK Immigration: (852) 1868.
+                    </div>
+                 </div>
+             );
+        };
+
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('Itinerary');
+            const [location, setLocation] = useState('upper_hills'); // 'upper_hills' or 'central_walk'
+
+            return (
+                <div className="max-w-md mx-auto bg-white min-h-screen shadow-2xl relative">
+                    <Header activeTab={activeTab} setActiveTab={setActiveTab} />
+                    
+                    <div className="bg-gray-50 min-h-[calc(100vh-140px)]">
+                        {activeTab === 'Itinerary' && <ItineraryView location={location} setLocation={setLocation} />}
+                        {activeTab === 'Transport' && <TransportView location={location} />}
+                        {activeTab === 'Taxi Cards' && <TranslateView location={location} />}
+                        {activeTab === 'Info' && <InfoView location={location} />}
+                    </div>
+
+                    {/* Floating Action for Return */}
+                    <div className="fixed bottom-6 right-6 max-w-[calc(100%-3rem)] md:max-w-[400px]">
+                         <div className="bg-gray-900 text-white px-4 py-3 rounded-full shadow-lg flex items-center space-x-3 text-sm opacity-90 backdrop-blur">
+                            <i className="fas fa-clock text-yellow-400 animate-pulse"></i>
+                            <span>Return Deadline: <strong>5:30 PM</strong></span>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
